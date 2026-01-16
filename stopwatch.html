@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Stopwatch</title>
+    <meta name="description" content="A user-friendly stopwatch with lap time tracking">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        .digit {
+            font-variant-numeric: tabular-nums;
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- Stopwatch Display -->
+        <div class="bg-indigo-600 text-white p-6 text-center">
+            <h1 class="text-2xl font-bold mb-4">Stopwatch</h1>
+            <div class="text-5xl font-mono font-bold digit" id="display">00:00:00.00</div>
+        </div>
+
+        <!-- Controls -->
+        <div class="p-6 flex justify-center space-x-4">
+            <button id="startBtn" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-full font-medium transition-colors">
+                <i class="fas fa-play mr-2"></i>Start
+            </button>
+            <button id="pauseBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-3 rounded-full font-medium transition-colors hidden">
+                <i class="fas fa-pause mr-2"></i>Pause
+            </button>
+            <button id="lapBtn" class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-full font-medium transition-colors">
+                <i class="fas fa-flag mr-2"></i>Lap
+            </button>
+            <button id="resetBtn" class="bg-red-500 hover:bg-red-600 text-white px-6 py-3 rounded-full font-medium transition-colors">
+                <i class="fas fa-redo mr-2"></i>Reset
+            </button>
+        </div>
+
+        <!-- Lap Times -->
+        <div class="border-t border-gray-200 p-6">
+            <h2 class="text-lg font-semibold mb-4">Lap Times</h2>
+            <div class="max-h-64 overflow-y-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-gray-500 text-sm border-b">
+                            <th class="text-left pb-2">Lap</th>
+                            <th class="text-right pb-2">Time</th>
+                            <th class="text-right pb-2">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lapTimes" class="divide-y divide-gray-100">
+                        <!-- Lap times will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const display = document.getElementById('display');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const lapBtn = document.getElementById('lapBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const lapTimes = document.getElementById('lapTimes');
+
+        // Stopwatch variables
+        let startTime = 0;
+        let elapsedTime = 0;
+        let timerInterval;
+        let isRunning = false;
+        let lapCount = 0;
+        let lastLapTime = 0;
+
+        // Format time as HH:MM:SS.mm
+        function formatTime(timeInMilliseconds) {
+            const date = new Date(timeInMilliseconds);
+            const hours = date.getUTCHours().toString().padStart(2, '0');
+            const minutes = date.getUTCMinutes().toString().padStart(2, '0');
+            const seconds = date.getUTCSeconds().toString().padStart(2, '0');
+            const milliseconds = Math.floor(date.getUTCMilliseconds() / 10).toString().padStart(2, '0');
+            
+            return `${hours}:${minutes}:${seconds}.${milliseconds}`;
+        }
+
+        // Update the display
+        function updateDisplay() {
+            const currentTime = Date.now();
+            elapsedTime = currentTime - startTime;
+            display.textContent = formatTime(elapsedTime);
+        }
+
+        // Start the stopwatch
+        function start() {
+            if (!isRunning) {
+                startTime = Date.now() - elapsedTime;
+                timerInterval = setInterval(updateDisplay, 10);
+                isRunning = true;
+                startBtn.classList.add('hidden');
+                pauseBtn.classList.remove('hidden');
+            }
+        }
+
+        // Pause the stopwatch
+        function pause() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                pauseBtn.classList.add('hidden');
+                startBtn.classList.remove('hidden');
+            }
+        }
+
+        // Reset the stopwatch
+        function reset() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            elapsedTime = 0;
+            lapCount = 0;
+            lastLapTime = 0;
+            display.textContent = '00:00:00.00';
+            lapTimes.innerHTML = '';
+            pauseBtn.classList.add('hidden');
+            startBtn.classList.remove('hidden');
+        }
+
+        // Record a lap time
+        function lap() {
+            if (isRunning) {
+                lapCount++;
+                const currentLapTime = elapsedTime;
+                const lapDifference = currentLapTime - lastLapTime;
+                
+                const row = document.createElement('tr');
+                row.className = 'py-2';
+                row.innerHTML = `
+                    <td class="py-2">Lap ${lapCount}</td>
+                    <td class="text-right">${formatTime(lapDifference)}</td>
+                    <td class="text-right">${formatTime(currentLapTime)}</td>
+                `;
+                
+                lapTimes.prepend(row);
+                lastLapTime = currentLapTime;
+            }
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', start);
+        pauseBtn.addEventListener('click', pause);
+        resetBtn.addEventListener('click', reset);
+        lapBtn.addEventListener('click', lap);
+    </script>
+</body>
+</html>
